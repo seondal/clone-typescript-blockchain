@@ -1,73 +1,93 @@
-/* Local Storage API */
-
-class SStorage <V> {
-    [key: string]: V
+abstract class LocalStorageAPI<T> {
+    protected storage: SStorage<T> = {};
+    
+    abstract length(): number;
+    abstract key(num: number): T;
+    abstract getItem(key:string): T;
+    abstract setItem(key:string, value:T): void;
+    abstract removeItem(key:string): void;
+    abstract clear(): void
 }
-
-abstract class LocalStorageAPI <V> {
-    constructor (
-        protected storage : SStorage <V> = {}        
-    ) {}
-
-    abstract setItem(key: string, value: V) : void
-    abstract getItem(key: string) : V
-    abstract clearItem(key: string) : void
-    abstract clear() : void
+interface SStorage<T> {
+    [key:string]: T
 }
-
-class LocalStorage <V> extends LocalStorageAPI <V> {
-    setItem(key:string, value:V) {
-        this.storage[key] = value
+class LocalStorage extends LocalStorageAPI<string> {
+    public length() {
+        return Object.keys(this.storage).length;
     }
-    getItem(key: string) {
+    public key(num: number) {
+        return Object.keys(this.storage)[num];
+    }
+    public getItem(key: string) {
         return this.storage[key]
     }
-    clearItem(key: string) {
+    public setItem(key:string, value:T) {
+        this.storage[key] = value;
+    }
+    public removeItem(key:string) {
         delete this.storage[key]
     }
-    clear() {
+    public clear() {
         this.storage = {}
     }
 }
 
-
-const localstorage = new LocalStorage <string>()
-localstorage.setItem("kimchi", "hot")
-console.log(localstorage.getItem("kimchi"))
-localstorage.clearItem("kimchi")
-localstorage.clear()
-
-
-
-/* Geolocattion API */
+///
 
 interface GeolocationAPI {
-    getCurrentPosition(successFn: Function) : void,
-    getCurrentPosition(successFn: Function, errorFn: Function) : void,
-    getCurrentPosition(successFn: Function, errorFn: Function, optionsObj: Object) : void,
-    watchPosition(successFn:Function) : number,
-    watchPosition(successFn:Function, errorFn:Function) : number,
-    watchPosition(successFn:Function, errorFn:Function, optionsObj:Object) : number,
-    clearWatch(id: number) : void
+    getCurrentPosition: GetCurrentPosition;
+    watchCurrentPosition: WatchCurrentPosition;
+    clearWatch: ClearWatch;
 }
-
 class GGeolocation implements GeolocationAPI {
-    getCurrentPosition(successFn: Function, errorFn?: Function, optionsObj?: Object) {}
-    watchPosition(successFn: Function, errorFn?:Function, optionsObj?:Object) { return 123 }
-    clearWatch(id: number) {}
+    getCurrentPosition: GetCurrentPosition = (        
+        success: FunctionSuccess,
+        error?: FunctionError,
+        options?: ObjectOptions
+    ) => { return; }
+    watchCurrentPosition: WatchCurrentPosition = (
+        success: FunctionSuccess,
+        error?: FunctionError,
+        options?: ObjectOptions
+    ) => { return; }
+    clearWatch: ClearWatch = (
+        id: number
+    ) => {}
 }
 
-
-function successFn() {}
-function errorFn() {}
-const optionsObj : object = {}
-const id : number = 123
-
-const geolocation = new GGeolocation()
-geolocation.getCurrentPosition(successFn);
-geolocation.getCurrentPosition(successFn, errorFn);
-geolocation.getCurrentPosition(successFn, errorFn, optionsObj);
-geolocation.watchPosition(successFn);
-geolocation.watchPosition(successFn, errorFn);
-geolocation.watchPosition(successFn, errorFn, optionsObj);
-geolocation.clearWatch(id);
+interface GGeolocationCoordinates {
+    readonly latitude:  number;
+    readonly longitude: number;
+    readonly altitude: number;
+    readonly  accuracy: number;
+    readonly altitudeAccuracy: number;
+    readonly heading: number;
+    readonly spped: number;
+}
+interface GGeolocationPosition {
+    coords: GGeolocationCoordinates
+    timestamp: DOMHighResTimeStamp
+}
+type UnsignedShort = "PERMISSION_DENIED" | "POSITION_UNAVAILABLE" | "TIMEOUT";
+interface GGeolocationPositionError {
+    code: UnsignedShort;
+    message: string;
+}
+type FunctionSuccess = (geolocationPosition: GGeolocationPosition) => void
+type FunctionError = (geolocationPositionError: GGeolocationPositionError) => void;
+type ObjectOptions = {
+    maximumAge: number;
+    timeout: number;
+    enableHighAccuracy: boolean;
+}
+type GetCurrentPosition = {
+    (success: FunctionSuccess): void
+    (success: FunctionSuccess, error: FunctionError): void
+    (success: FunctionSuccess, error: FunctionError, options: ObjectOptions): void
+}
+type WatchCurrentPosition = {
+    (success: FunctionSuccess): void
+    (success: FunctionSuccess, error: FunctionError): void
+    (success: FunctionSuccess, error: FunctionError, options: ObjectOptions): void
+}
+type ClearWatch = (id: number) => void
